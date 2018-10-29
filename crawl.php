@@ -13,6 +13,7 @@ include("classes/DomDocumentParser.php");
 			$src = $scheme . "://" . $host . "/" . $src;
 		}
 		return $src;
+		echo "sample";
 	}
 	function followLinks($url) {
 		$parser = new DomDocumentParser($url);
