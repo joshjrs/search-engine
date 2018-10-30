@@ -1,7 +1,12 @@
  <!DOCTYPE html>
  <html>
  <head>
- 	<title></title>
+ 	<title>Search Engine</title>
+ 	<meta name="description" content="Search Engine">
+ 	<meta name="keywords" content="Search Engine">
+ 	<meta name="author" content="Joshua Sabanal">
+ 	<meta name="viewport" content="">
+
  	<link rel="stylesheet" type="text/css" href="assets/css/style.css">
  </head>
  <body>

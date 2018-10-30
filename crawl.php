@@ -1,7 +1,34 @@
 <?php 
+include("config.php");
 include("classes/DomDocumentParser.php");
 	$alreadyCrawled = array();
 	$crawling = array();
+	$alreadyFoundImages = array();
+	function insertLink($url, $title, $description, $keywords) {
+		global $con;
+		$query = $con->prepare("INSERT INTO sites(url,title,description,keywords) VALUES(:url,:title,:description,:keywords)");
+		$query->bindParam(":url", $url);
+		$query->bindParam(":title", $title);
+		$query->bindParam(":description", $description);
+		$query->bindParam(":keywords", $keywords);
+		return $query->execute();
+	}
+	function insertImage($url, $src, $alt, $title) {
+		global $con;
+		$query = $con->prepare("INSERT INTO images(siteUrl,imageUrl,alt,title) VALUES(:siteUrl,:imageUrl,:alt,:title)");
+		$query->bindParam(":siteUrl", $url);
+		$query->bindParam(":imageUrl", $src);
+		$query->bindParam(":alt", $alt);
+		$query->bindParam(":title", $title);
+		$query->execute();
+	}
+	function linkExist($url) {
+		global $con;
+		$query = $con->prepare("SELECT * FROM sites WHERE url = :url");
+		$query->bindParam(":url", $url);
+		$query->execute();
+		return $query->rowCount() != 0;
+	}
 	function createLink($src, $url) {
 		$scheme = parse_url($url)["scheme"];
 		$host = parse_url($url)["host"];
@@ -17,6 +44,54 @@ include("classes/DomDocumentParser.php");
 			$src = $scheme . "://" . $host . "/" . $src;
 		}
 		return $src;
+	}
+	function getDetails($url) {
+		global $alreadyFoundImages;
+		$parser = new DomDocumentParser($url);
+		$titleArray = $parser->getTitleTags();
+		if(sizeof($titleArray) == 0 || $titleArray->item(0) == NULL) {
+			return;
+		}
+		$title = $titleArray->item(0)->nodeValue;
+		$title = str_replace("\n", "", $title);
+		if($title == "") {
+			return;
+		}
+		$description = "";
+		$keywords = "";
+		$metasArray = $parser->getMetaTags();
+		foreach($metasArray as $meta) {
+			if($meta->getAttribute("name") == "description") {
+				$description = $meta->getAttribute("content");
+			}
+			if($meta->getAttribute("name") == "keywords") {
+				$keywords = $meta->getAttribute("content");
+			}
+		}
+		$description = str_replace("\n", "", $description);
+		$keywords = str_replace("\n", "", $keywords);
+		// echo "URL: $url, DESCRIPTION: $description, KEYWORDS: $keywords<br>";
+		if(linkExist($url)) {
+			echo "$url already exist";
+		} else if(insertLink($url, $title, $description, $keywords)){
+			echo "SUCCESS: $url";
+		} else {
+			echo "ERROR: Failed to insert $url";
+		}
+		$imageArray = $parser->getImages();
+		foreach($imageArray as $image) {
+			$src = $image->getAttribute("src");
+			$alt = $image->getAttribute("alt");
+			$title = $image->getAttribute("title");
+			if(!$title && !$alt) {
+				continue;
+			}
+			$src = createLink($src, $url);
+			if(!in_array($src, $alreadyFoundImages)) {
+				$alreadyFoundImages[] = $src;
+				insertImage($url,$src,$alt,$title);
+			}
+		}
 	}
 	function followLinks($url) {
 		global $alreadyCrawled;
@@ -34,14 +109,18 @@ include("classes/DomDocumentParser.php");
 			if(!in_array($href, $alreadyCrawled)) {
 				$alreadyCrawled[] = $href;
 				$crawling[] = $href;
-			}
-			echo $href . "<br>";
+				getDetails($href);
+			} 
+			// else {
+			// 	return;
+			// }
+			// echo $href . "<br>";
 		}
 		array_shift($crawling);
 		foreach($crawling as $site) {
 			followLinks($site);
 		}
 	}
-	$startUrl = "http://www.hypebeast.com";
+	$startUrl = "http://www.solemovement.com";
 	followLinks($startUrl);
 ?>
