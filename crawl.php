@@ -1,4 +1,5 @@
 <?php 
+ini_set('max_execution_time', 300);
 include("config.php");
 include("classes/DomDocumentParser.php");
 	$alreadyCrawled = array();
@@ -121,6 +122,6 @@ include("classes/DomDocumentParser.php");
 			followLinks($site);
 		}
 	}
-	$startUrl = "http://www.solemovement.com";
+	$startUrl = "https://en.wikipedia.org/wiki/Main_Page";
 	followLinks($startUrl);
 ?>

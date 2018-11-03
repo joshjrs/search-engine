@@ -13,7 +13,7 @@
  	<div class="wrapper indexPage">
  		<div class="mainSection">
 	 		<div class="logoContainer">
-	 			<img src="assets/images/logo.png">
+	 			<img src="assets/images/doodleLogo.png">
 	 		</div>
 	 		<div class="searchContainer">
 	 			<form action="search.php" method="GET">
